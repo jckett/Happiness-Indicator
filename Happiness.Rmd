@@ -1,0 +1,119 @@
+---
+title: "Assignment 4.1 Student Survey"
+author: "Joi Chu-Ketterer"
+date: "June 28th 2019"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r, include=FALSE}
+library(ggm)
+```
+
+```{r}
+survey <- read.csv("survey.csv", stringsAsFact = FALSE)
+survey
+
+```
+
+Looking at the data, since Gender is already using binary numerical inputs, we don't need to factor this variable. Although, if we did this is what it would look like: 
+
+```{r}
+fgender = factor(survey$Gender)
+fgender
+
+```
+
+Moving forward though, we are mostly interested in the relationship between TimeReading, TimeTV, and Happiness. 
+
+```{r}
+cov(survey[,1:3])
+
+```
+
+Covariance statistics will give us insight into the relationships between variables. For instance, from the above matrix we know the following:
+
+  - TimeReading and TimeTV have a negative relationship  
+  - TimeReading and Happiness have a negative relationship  
+  - TimeTV and Happiness have a positive relationship  
+  
+Since the magnitude of covariance is affected by the magnitude of the variable values themselves, looking at the numerical values of covariance is not useful, but rather just focusing on the parity of the value. 
+
+Without reaching out directly to the data owners, I'm not sure how to verify the units of each variable. By looking at the data though, I would guess the TimeReading is in hours, the TimeTV is in minutes, and Happiness is measured as a percentage of some sort. Since covariance changes with the scale of the variables, changing the units to make them more uniform shouldn't change the parity of the covariance, but it will change the numerical value. For instance, if my assumption that TimeReading is in hours, but TimeTV is in minutes, I will divide TimeTV by 60 and caluclate the covariance between those two variables one more time. 
+
+```{r}
+new <- (survey$TimeTV/60)
+cov(survey$TimeReading, new)
+
+```
+
+By dividing TimeTV by 60 to get the units to hours, we see the covariance is now -0.339, whereas before it was -20.363. This makes sense, since the scale of our TimeTV variable decreased, and so the covariance decreased as well. But as I said, the parity remains, still telling us the two variables have a negative relationship regardless of the units. 
+
+Before choosing which correlation test to perform, let's quickly review how to choose which one to use:
+  - Pearson: best for linearly related variables, assume both variables are normalling distributed  
+  - Kendall: non-parametric test to measure dependence strength between two variables, better suited for small sample sizes or if multiple entries have the same value  
+  - Spearman: non-parametric test to measure degree of association between two variables  
+  
+Knowing this, since most of the scatterplots we created earlier generally look linear, we will move forward with a pearson correlation. Additionally, since our Gender variable only has two levels we can still use the Pearson correlation method. I have the following predictions for each pair:
+  - TimeReading, TimeTV: negative  
+  - TimeReading, Happiness: negative  
+  - TimeTV, Happiness: negative  
+  
+```{r}
+cor(survey[,1:3], method = "pearson")
+```
+
+```{r}
+cor.test(survey$TimeReading, survey$Happiness, method = "pearson")
+
+```
+
+```{r}
+cor.test(survey$TimeReading, survey$Happiness, method = "pearson", conf.level = 0.99)
+
+```
+
+From the correlation matrix, we have the following r values:
+  - TimeReading, TimeTV:-0.883  
+  - TimeTV, Happiness: 0.637  
+  - TimeReading, Happiness: -0.435  
+
+With the correlation matrix, we caluclated the correlation coefficients, which are effect sizes. As such, just from these r values we know the parity and magnitude of the relationships. With an r value of -0.833 we know that TimeReading and TimeTV have a large negative relationship, which makes sense. The more time you spend reading the less time you spend watching TV. An r value of 0.637 suggests an almost opposite positive relationship between TimeTV and Happiness, suggesting that those who watch TV are happy. Comparing this to the r value of -0.435 between TimeReading and Happiness, it's safe to say people who watch TV are much happier than those who read. 
+
+Earlier, I speculated the relationship between the various values, however, we can not make direct conclusions about causality with just the correlation coefficient. For this reason, we will go ahead and caluclate the coefficient of determination. 
+
+```{r}
+cor(survey[,1:3])^2
+cor(survey[,1:3])^2 * 100
+
+```
+
+Here, rather than having a parity of relationship we have a percentage. So once again, here are the values of the correlation coefficients:
+  - TimeReading, TimeTV:-0.883  
+  - TimeTV, Happiness: 0.637  
+  - TimeReading, Happiness: -0.435  
+
+And here are the coefficients of determination (as percentages):
+  - TimeReading, TimeTV: 77.98  
+  - TimeTV, Happiness: 40.52  
+  - TimeReading, Happiness: 18.91  
+
+Either way, we are observing similar trends. For instance, an r^2 value of 18.91 indicates that despite having such a strong negative correlation of -0.435, the time spent reading only accounts for 18.91% of one's happiness. Rather, the time someone spends watching TV has a much greater affect on one's happiness, and in general a positive effect. 
+
+With a combination of a negative effect size of -0.883 and a high coefficient of determination coefficient of 77.98, I am confident in saying that students who watched TV are likely to read much less, and vice versa. The negative effect size indicates the two variables are inversely related, and so as one increases the other decreases. Additionally, the 77.98% accountability of TimeTV on TimeReading supports the idea that the time spent on watching TV has an almost 80% affect on the time they can allot to reading. 
+
+I will control the TimeReading variable, to understand the partial correlation between TimeTV and Happiness. 
+
+```{r}
+partial <- pcor(c("TimeTV", "Happiness", "TimeReading"),var(survey))
+partial
+partial^2 * 100
+
+```
+
+Let's compare these new values to the original values we got:
+  - r value for TimeTV and Happiness: 0.637  
+  - r^2 value for TimeTV and Happiness: 40.52  
+
+By fixing TimeReading, we see a decrease in the r value. This tells us that TimeTV itself has a less significant direct affect on Happiness, although only marginally. This can in turn suggest that the time spent reading has very little affect on one's happiness, and if you truly wanted to increase someone's happiness and could only affect one aspect of their lives, you would most likely want to adjust the amount of time they spend watching TV. 
