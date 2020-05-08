@@ -1,13 +1,11 @@
-# Home Square Footage Rates
+# Happiness Indicator
 
-This project predicts the cost of a home based on square footage and basic housing amenities. 
+This project predicts people's happiness based on the time they spend reading or watching TV. 
 
 ## Technologies
 
-Completed in Python, the following packages are used
- - readxl
- - QuantPsyc
- - car
+Completed in R, the following packages are used
+ - ggm
  
 # Launch
 
